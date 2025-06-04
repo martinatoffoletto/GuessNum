@@ -19,7 +19,7 @@ const GameLogic = {
   },
 
   checkGuess(secret, guess) {
-    let correct = 0; /
+    let correct = 0;
     let regular = 0;
     let mal = 0;
 
