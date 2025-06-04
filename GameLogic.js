@@ -19,18 +19,16 @@ const GameLogic = {
   },
 
   checkGuess(secret, guess) {
-    let correct = 0; // dígitos en la posición correcta
-    let regular = 0; // dígitos existentes pero en otra posición
-    let mal = 0;     // dígitos no existentes en secreto
+    let correct = 0; /
+    let regular = 0;
+    let mal = 0;
 
     const secretArr = secret.split("");
     const guessArr = guess.split("");
 
-    // Para evitar contar varias veces un dígito:
     const secretCount = {};
     const guessCount = {};
 
-    // Contar correctos (posición y número)
     for (let i = 0; i < 4; i++) {
       if (guessArr[i] === secretArr[i]) {
         correct++;
@@ -52,7 +50,7 @@ const GameLogic = {
     return { correct, regular, mal };
   },
 
-  // Guardar valor en AsyncStorage
+
   guardar: async (clave, valor) => {
     try {
       await AsyncStorage.setItem(clave, JSON.stringify(valor));
@@ -61,7 +59,6 @@ const GameLogic = {
     }
   },
 
-  // Recuperar valor de AsyncStorage
   recuperar: async (clave) => {
     try {
       const recuperado = await AsyncStorage.getItem(clave);
@@ -76,13 +73,11 @@ const GameLogic = {
     }
   },
 
-  // Obtener ranking completo
   getRanking: async () => {
     const ranking = await GameLogic.recuperar(RANKING_KEY);
     return ranking || [];
   },
 
-  // Actualizar ranking con resultado (true=ganó, false=perdió)
   updateRanking: async (name, won) => {
     let ranking = await GameLogic.getRanking();
 

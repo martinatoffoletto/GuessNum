@@ -31,7 +31,7 @@ function Tabs() {
               style={{
                 width: 24,
                 height: 24,
-                tintColor: focused ? 'tomato' : 'gray', // cambia color si quieres
+                tintColor: focused ? 'tomato' : 'gray',
               }}
               resizeMode="contain"
             />
