@@ -1,55 +1,67 @@
-import React, { useState, useEffect } from "react";
-import { View, Text, TextInput, Button, StyleSheet, Alert, FlatList } from "react-native";
+import { useEffect, useState } from "react";
+import {
+  View,
+  Text,
+  TextInput,
+  Button,
+  FlatList,
+  Alert,
+  StyleSheet,
+  BackHandler,
+} from "react-native";
 import GameLogic from "../GameLogic";
+
 
 export default function GameScreen({ route, navigation }) {
   const { name, allowRepeat } = route.params;
-
   const [secret, setSecret] = useState("");
+  const [final, setFinal] = useState("XXXX");
   const [attempt, setAttempt] = useState("");
   const [history, setHistory] = useState([]);
   const [attemptsLeft, setAttemptsLeft] = useState(10);
   const [gameOver, setGameOver] = useState(false);
+  const [resultMessage, setResultMessage] = useState("");
+
+  const generateNewSecret = () => {
+    const newSecret = GameLogic.generateNumber(allowRepeat);
+    console.log("secreto generado:", newSecret);
+    setSecret(newSecret);
+    setFinal("XXXX");
+    setHistory([]);
+    setAttempt("");
+    setAttemptsLeft(10);
+    setGameOver(false);
+    setResultMessage("");
+  };
 
   useEffect(() => {
-    const newSecret = GameLogic.generateNumber(allowRepeat);
-    setSecret(newSecret);
+    generateNewSecret();
   }, []);
 
-  const handleGuess = () => {
-    if (attempt.length !== 4 || !/^\d{4}$/.test(attempt)) {
-      Alert.alert("Error", "Ingresa un número válido de 4 cifras.");
-      return;
+  useEffect(() => {
+    if (attempt.length === 4  && !gameOver) {
+      handleGuess();
     }
+  }, [attempt]);
 
+  const handleGuess = () => {
     const result = GameLogic.checkGuess(secret, attempt);
     setHistory([{ guess: attempt, result }, ...history]);
-    setAttemptsLeft(attemptsLeft - 1);
+    const newAttemptsLeft = attemptsLeft - 1;
+    setAttemptsLeft(newAttemptsLeft);
 
     if (result.correct === 4) {
-      Alert.alert("¡Ganaste!", `Felicidades, adivinaste el número ${secret}`, [
-        {
-          text: "OK",
-          onPress: async () => {
-            await GameLogic.updateRanking(name, true);
-            navigation.navigate("Tabs");
-          },
-        },
-      ]);
+      setFinal(secret);
+      setResultMessage(`¡Ganaste! El número era ${secret}`);
+      GameLogic.updateRanking(name, true);
       setGameOver(true);
       return;
     }
 
-    if (attemptsLeft - 1 <= 0) {
-      Alert.alert("Perdiste", `Se te acabaron los intentos. El número era: ${secret}`, [
-        {
-          text: "OK",
-          onPress: async () => {
-            await GameLogic.updateRanking(name, false);
-            navigation.navigate("Tabs");
-          },
-        },
-      ]);
+    if (newAttemptsLeft <= 0) {
+      setFinal(secret);
+      setResultMessage(`Perdiste. El número era ${secret}`);
+      GameLogic.updateRanking(name, false);
       setGameOver(true);
       return;
     }
@@ -59,7 +71,14 @@ export default function GameScreen({ route, navigation }) {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>🎮 Jugador: {name}</Text>
+        <View style={styles.backButtonContainer}>
+              <Button
+                title="←"
+                onPress={() => navigation.navigate("Tabs", { screen: "Home" })}
+              />
+        </View>
+      <Text style={styles.title}>Número  {final}</Text>
+      <Text style={styles.subtitle}>Jugador: {name}</Text>
       <Text style={styles.subtitle}>Intentos restantes: {attemptsLeft}</Text>
 
       <TextInput
@@ -69,78 +88,122 @@ export default function GameScreen({ route, navigation }) {
         maxLength={4}
         value={attempt}
         onChangeText={setAttempt}
+        onChangeText={(text) => {
+            if (/^\d*$/.test(text)) { //para choquiar q sean solo numeros
+              setAttempt(text);
+            } else {
+              Alert.alert("Error", "Solo se permiten números.");
+            }
+          }}
         editable={!gameOver}
       />
 
-      <View style={styles.buttonContainer}>
-        <Button title="Intentar" onPress={handleGuess} disabled={gameOver} color="#007bff" />
-      </View>
-
       <FlatList
-        data={history}
-        keyExtractor={(_, i) => i.toString()}
-        ListHeaderComponent={
-          history.length > 0 && (
-            <Text style={styles.historyTitle}>Historial de Intentos</Text>
-          )
-        }
-        renderItem={({ item }) => (
-          <View style={styles.historyItem}>
-            <Text style={styles.historyGuess}>Número: {item.guess}</Text>
-            <Text style={styles.historyResult}>
-              ✅ Correctos: {item.result.correct} | 🟡 Regular: {item.result.regular} | ❌ Mal: {item.result.mal}
-            </Text>
+              data={history}
+              keyExtractor={(_, i) => i.toString()}
+              ListHeaderComponent={
+                history.length > 0 && (
+                  <Text style={styles.historyTitle}>Historial de Intentos</Text>
+                )
+              }
+              renderItem={({ item, index }) => (
+                <View style={styles.historyItem}>
+                  <Text style={styles.historyGuess}>{history.length - index} - Número: {item.guess}</Text>
+                  <Text style={styles.historyResult}>
+                    Bien: {item.result.correct} | Regular: {item.result.regular} | Mal: {item.result.mal}
+                  </Text>
+                </View>
+              )}
+       />
+
+      {gameOver && (
+        <View style={styles.resultContainer}>
+          <Text style={styles.resultText}>{resultMessage}</Text>
+          <View style={styles.buttonContainer}>
+            <Button title="Jugar otra vez" onPress={generateNewSecret} color="#28a745" />
           </View>
-        )}
-      />
+          <View style={styles.buttonContainer}>
+            <Button
+              title="Finalizar"
+              onPress={() => BackHandler.exitApp()}
+              color="#dc3545"
+            />
+          </View>
+        </View>
+      )}
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: "#f4f6f8", padding: 20, paddingTop: 50 },
-  title: { fontSize: 26, fontWeight: "bold", marginBottom: 10, color: "#333" },
-  subtitle: { fontSize: 16, marginBottom: 10, color: "#666" },
+  container: {
+    flex: 1,
+    padding: 20,
+    backgroundColor: "#f8f9fa",
+  },
+  title: {
+    fontSize: 26,
+    fontWeight: "bold",
+    marginBottom: 10,
+    color: "#333",
+    textAlign: "center",
+    marginTop:20
+  },
+  subtitle: {
+    fontSize: 18,
+    marginBottom: 5,
+  },
   input: {
     borderWidth: 1,
     borderColor: "#ccc",
-    borderRadius: 10,
-    paddingHorizontal: 12,
-    height: 44,
+    padding: 10,
+    fontSize: 18,
+    marginVertical: 10,
+    borderRadius: 5,
     backgroundColor: "#fff",
-    fontSize: 16,
+    textAlign: "center",
   },
   buttonContainer: {
-    marginVertical: 12,
-    borderRadius: 10,
-    overflow: "hidden",
+    marginVertical: 5,
+    alignSelf: "center",
+    width: "60%",
   },
   historyTitle: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: "bold",
-    marginBottom: 10,
     marginTop: 20,
-    color: "#444",
+    marginBottom:20,
+    textAlign: "center",
   },
   historyItem: {
-    backgroundColor: "#fff",
-    padding: 12,
-    borderRadius: 10,
+      padding: 10,
+      backgroundColor: "#e9ecef",
+      borderRadius: 5,
+      marginTop: 10,
+    },
+    historyGuess: {
+      fontSize: 16,
+    },
+    historyResult: {
+      fontSize: 16,
+      fontStyle: "italic",
+    },
+  resultContainer: {
+    marginTop: 20,
+    alignItems: "center",
+  },
+  resultText: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: "#333",
     marginBottom: 10,
-    shadowColor: "#000",
-    shadowOpacity: 0.05,
-    shadowOffset: { width: 0, height: 2 },
-    shadowRadius: 4,
-    elevation: 2,
+    textAlign: "center",
   },
-  historyGuess: {
-    fontSize: 16,
-    fontWeight: "600",
-    marginBottom: 4,
-    color: "#222",
+  backButtonContainer: {
+    position: "absolute",
+    top: 10,
+    left: 10,
+    width: 40,
   },
-  historyResult: {
-    fontSize: 14,
-    color: "#555",
-  },
+
 });

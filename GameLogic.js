@@ -3,13 +3,13 @@ import AsyncStorage from "@react-native-async-storage/async-storage";
 const RANKING_KEY = "RANKING";
 
 const GameLogic = {
-  generateNumber(allowRepeat) {
+  generateNumber(allowRepeat) { //genera num random entre 0 y 9
     let digits = [];
     while (digits.length < 4) {
       const n = Math.floor(Math.random() * 10);
-      if (allowRepeat) {
+      if (allowRepeat) { //si se permiten repetidos
         digits.push(n);
-      } else {
+      } else { //no se permiten repetidos, pide otro
         if (!digits.includes(n)) {
           digits.push(n);
         }
@@ -29,7 +29,7 @@ const GameLogic = {
     const secretCount = {};
     const guessCount = {};
 
-    for (let i = 0; i < 4; i++) {
+    for (let i = 0; i < 4; i++) { //num q respetan posicion
       if (guessArr[i] === secretArr[i]) {
         correct++;
       } else {
@@ -38,7 +38,7 @@ const GameLogic = {
       }
     }
 
-    // Contar regulares (número correcto pero posición incorrecta)
+    // num correcto pero pos incorrecta
     for (const d in guessCount) {
       if (secretCount[d]) {
         regular += Math.min(guessCount[d], secretCount[d]);
