@@ -87,7 +87,6 @@ export default function GameScreen({ route, navigation }) {
         keyboardType="numeric"
         maxLength={4}
         value={attempt}
-        onChangeText={setAttempt}
         onChangeText={(text) => {
             if (/^\d*$/.test(text)) { //para choquiar q sean solo numeros
               setAttempt(text);
