@@ -53,7 +53,7 @@ export default function GameScreen({ route, navigation }) {
     if (result.correct === 4) {
       setFinal(secret);
       setResultMessage(`¡Ganaste! El número era ${secret}`);
-      GameLogic.updateRanking(name, true);
+      GameLogic.updateRanking(name, true); //incrementa contador de ganados
       setGameOver(true);
       return;
     }
@@ -61,7 +61,7 @@ export default function GameScreen({ route, navigation }) {
     if (newAttemptsLeft <= 0) {
       setFinal(secret);
       setResultMessage(`Perdiste. El número era ${secret}`);
-      GameLogic.updateRanking(name, false);
+      GameLogic.updateRanking(name, false); //incrementa contador de perdidos
       setGameOver(true);
       return;
     }
